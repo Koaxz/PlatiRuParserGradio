@@ -1,22 +1,19 @@
-# PlatiRuParser
-## Simple app used for browsing through plati.market
-This app was created because plati.market lacks sorting in search results 
-## Features
+# ПлатиРуПарсер
+ ## Простое приложение для просмотра plati.market
+ Это приложение создано потому, что на plati.market отсутствует сортировка в результатах поиска. 
+ ## Функции
 
-- Search bar
-- Sort by any column
-- Open product card in browser by double clicking on it
-## Screenshots
-<sub>results sorted by price</sub>
-
-![image](https://user-images.githubusercontent.com/49995905/227739462-e6fbb8c7-028e-4338-9d23-79d89291e242.png)
+ - Панель поиска
+ - Сортировка по любому столбцу
+ - Откройте карточку товара в браузере, дважды щелкнув по ней.
+ ## Скриншоты
+ <sub>результаты, отсортированные по цене</sub>
 
 
-## Installation
-in console:pip install -r requirements.txt
+![image]([https://user-images.githubusercontent.com/49995905/227739462-e6fbb8c7-028e-4338-9d23-79d89291e242.png](https://github.com/Koaxz/PlatiRuParserGradio/blob/master/1.png?raw=true))
 
-then run: main.py
 
-OR
+## Монтаж
+ в консоли: pip install -r require.txt
 
-download the latest executable from releases tab
+ затем запустите: app.py
