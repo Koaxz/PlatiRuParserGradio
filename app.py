@@ -126,9 +126,9 @@ def search(query, data_table):
 
     # Создаем новый DataFrame из списка словарей products.data
     df = pd.DataFrame(products.data)
-    # Присваиваем DataFrame свойству value таблицы данных Gradio
-    data_table.value = df
-    return data_table
+    # Обновляем данные таблицы Gradio, используя правильный метод
+    data_table.update(df)
+    return df  # Возвращаем DataFrame вместо объекта Gradio Dataframe
 
 # Создание Gradio интерфейса
 def create_interface():
@@ -138,6 +138,7 @@ def create_interface():
         
         search_input = gr.Textbox(label="Search Query")
         search_button = gr.Button("Search")
+        # Изменено определение таблицы данных, убран параметр value
         data_table = gr.Dataframe(headers=["name", "link", "price", "rating", "sold"], interactive=True, label="Search Results")
 
         search_button.click(fn=search, inputs=[search_input, data_table], outputs=data_table)
