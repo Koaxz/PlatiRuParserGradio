@@ -10,7 +10,7 @@
  <sub>результаты, отсортированные по цене</sub>
 
 
-![image]([https://user-images.githubusercontent.com/49995905/227739462-e6fbb8c7-028e-4338-9d23-79d89291e242.png](https://github.com/Koaxz/PlatiRuParserGradio/blob/master/1.png?raw=true))
+![image]([https://user-images.githubusercontent.com/49995905/227739462-e6fbb8c7-028e-4338-9d23-79d89291e242.png](https://github.com/Koaxz/PlatiRuParserGradio/blob/master/1.png))
 
 
 ## Монтаж
