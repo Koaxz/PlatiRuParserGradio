@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="ru" prefix="og: http://ogp.me/ns#">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    
+    <!-- SEO -->
+    <title>PlatiParser V3 - Скачать парсер Plati.Market (PyQt6)</title>
+    <meta name="description" content="Мощный многопоточный парсер для Plati.market. Поиск дешевых ключей Steam, фильтрация по рейтингу. Windows 11 Style GUI. Скачать бесплатно.">
+    <meta name="robots" content="index, follow">
+    <meta property="og:title" content="PlatiParser V3">
+    <meta property="og:description" content="Парсер Plati.Market с интерфейсом Windows 11. Скачай бесплатно на GitHub.">
+    <meta property="og:type" content="website">
+    <!-- ЗАМЕНИ ССЫЛКУ НИЖЕ НА СВОЙ GITHUB PAGES URL -->
+    <meta property="og:url" content="https://github.com/Koaxz/PlatiRuParserGradio"> 
+    <meta property="og:image" content="https://repository-images.githubusercontent.com/566666666/cover-image.jpg">
+
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #60cdff; /* Windows 11 Blue */
+            --secondary: #7000ff;
+            --bg: #0a0a0a;
+            --glass: rgba(255, 255, 255, 0.05);
+            --text: #ffffff;
+            --code-bg: #1e1e1e;
+            /* Windows 11 Colors */
+            --win-bg: #202020;
+            --win-header: #202020;
+            --win-border: rgba(255,255,255,0.08);
+            --win-hover: rgba(255,255,255,0.06);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI Variable', 'Segoe UI', sans-serif; }
+        body { background-color: var(--bg); color: var(--text); overflow-x: hidden; }
+        
+        /* 3D Background */
+        #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: -1; opacity: 0.5; }
+
+        /* Nav */
+        nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 50px; position: fixed; width: 100%; z-index: 100; backdrop-filter: blur(15px); background: rgba(10,10,10,0.7); border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .logo { font-size: 1.5rem; font-weight: 800; background: linear-gradient(45deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; letter-spacing: 2px; }
+        .nav-btn { background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 8px 20px; border-radius: 4px; cursor: pointer; transition: 0.3s; text-decoration: none; font-weight: 600; font-size: 0.9rem;}
+        .nav-btn:hover { background: rgba(96, 205, 255, 0.1); box-shadow: 0 0 15px rgba(96, 205, 255, 0.2); }
+
+        /* Hero */
+        .hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; text-align: center; padding: 120px 20px 50px 20px; perspective: 1000px; }
+        h1 { font-size: 4.5rem; font-weight: 800; margin-bottom: 20px; line-height: 1.1; opacity: 0; transform: translateY(50px); letter-spacing: -1px; }
+        h1 span { color: var(--primary); text-shadow: 0 0 30px rgba(96, 205, 255, 0.3); }
+        .subtitle { font-size: 1.4rem; color: #aaa; max-width: 600px; margin-bottom: 50px; opacity: 0; transform: translateY(30px); font-weight: 300; }
+
+        /* --- WINDOWS 11 APP PREVIEW STYLE --- */
+        .app-preview {
+            width: 860px;
+            height: 540px;
+            background: var(--win-bg);
+            border: 1px solid var(--win-border);
+            border-radius: 8px; /* Win11 Corner Radius */
+            box-shadow: 
+                0 0 0 1px rgba(0,0,0,0.2),
+                0 20px 60px rgba(0,0,0,0.6), 
+                0 0 100px rgba(96, 205, 255, 0.05);
+            position: relative;
+            transform-style: preserve-3d;
+            transform: rotateX(10deg) scale(0.9);
+            transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            opacity: 0;
+            font-size: 14px;
+        }
+
+        .app-preview:hover { transform: rotateX(0deg) scale(1); }
+
+        /* Title Bar */
+        .win-titlebar {
+            height: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-left: 12px;
+            user-select: none;
+        }
+
+        .win-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            color: #fff;
+        }
+        
+        .win-icon { width: 16px; height: 16px; fill: var(--primary); }
+
+        .win-controls { display: flex; height: 100%; }
+        .win-btn {
+            width: 46px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+            color: #fff;
+        }
+        .win-btn svg { width: 10px; height: 10px; }
+        .win-btn:hover { background-color: rgba(255,255,255,0.1); }
+        .close-btn:hover { background-color: #c42b1c; }
+
+        /* App Content */
+        .win-body {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            height: 100%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0) 100%); /* Mica effect simulation */
+        }
+
+        /* Controls Area */
+        .win-input-group { display: flex; gap: 8px; margin-bottom: 5px; }
+        
+        .win-input {
+            flex: 1;
+            background: #2d2d2d;
+            border: 1px solid #3d3d3d; /* Win11 Input Border */
+            border-bottom: 1px solid #888;
+            border-radius: 4px;
+            height: 32px;
+            padding: 0 10px;
+            color: #fff;
+            font-size: 13px;
+        }
+        
+        .win-button {
+            background: var(--primary);
+            color: #000;
+            border: none;
+            border-radius: 4px;
+            padding: 0 20px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: default;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+
+        /* Table Area */
+        .win-table-container {
+            flex-grow: 1;
+            background: #262626;
+            border: 1px solid #333;
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .win-thead {
+            background: #2d2d2d;
+            display: flex;
+            border-bottom: 1px solid #333;
+            height: 30px;
+            align-items: center;
+            font-size: 12px;
+            color: #ccc;
+        }
+        
+        .win-th { flex: 1; padding: 0 10px; border-right: 1px solid #333; font-weight: 600; }
+        .win-th:last-child { border: none; }
+
+        .win-row {
+            display: flex;
+            height: 30px;
+            align-items: center;
+            border-bottom: 1px solid #2a2a2a;
+            font-size: 13px;
+            color: #eee;
+            transition: background 0.1s;
+        }
+        .win-row:nth-child(even) { background: rgba(255,255,255,0.02); }
+        .win-row:hover { background: rgba(255,255,255,0.06); }
+        .win-td { flex: 1; padding: 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .price-tag { color: var(--primary); font-weight: 600; }
+        .rating-stars { color: #ffb900; font-size: 11px; }
+
+        /* --- END WINDOWS STYLE --- */
+
+        /* Sections */
+        section { padding: 100px 50px; position: relative; }
+        .section-title { text-align: center; font-size: 2.5rem; margin-bottom: 80px; color: #fff; font-weight: 700;}
+        
+        /* Grid */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
+        .card { background: var(--win-bg); padding: 30px; border-radius: 8px; border: 1px solid var(--win-border); transition: 0.3s; position: relative; overflow: hidden; }
+        .card::before { content:''; position: absolute; top:0; left:0; width:100%; height:1px; background: linear-gradient(90deg, transparent, var(--primary), transparent); opacity: 0; transition: 0.3s; }
+        .card:hover { transform: translateY(-5px); background: #252525; border-color: rgba(255,255,255,0.1); }
+        .card:hover::before { opacity: 1; }
+        .card h3 { font-size: 1.2rem; margin-bottom: 10px; color: #fff; display: flex; align-items: center; gap: 10px; }
+        .card p { color: #bbb; line-height: 1.5; font-size: 0.95rem; }
+
+        /* Guide */
+        .guide-container { max-width: 900px; margin: 0 auto; }
+        .step-box { display: flex; gap: 30px; margin-bottom: 40px; opacity: 0; transform: translateX(-20px); }
+        .step-number { font-size: 2.5rem; font-weight: 900; color: #333; min-width: 60px; }
+        .step-content { flex: 1; }
+        .step-title { font-size: 1.3rem; margin-bottom: 10px; color: #fff; }
+        
+        .terminal-window { 
+            background: #1e1e1e; 
+            border-radius: 6px; 
+            padding: 15px; 
+            border: 1px solid #333; 
+            font-family: 'Consolas', monospace; 
+        }
+        .code-line { color: #d4d4d4; margin-top: 10px; display: block; font-size: 0.9rem; }
+        .code-line::before { content: '> '; color: var(--primary); }
+        .comment { color: #6a9955; font-style: italic; margin-top: 5px; display: block; font-size: 0.85rem; }
+
+        /* Download */
+        .download-section { height: 60vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: radial-gradient(circle at center, rgba(96, 205, 255, 0.1), transparent 60%); }
+        .cta-btn { 
+            padding: 15px 50px; 
+            font-size: 1.2rem; 
+            background: var(--primary); 
+            color: #000; 
+            text-decoration: none; 
+            border-radius: 4px; 
+            font-weight: 600; 
+            margin-top: 30px; 
+            transition: 0.3s; 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 10px;
+        }
+        .cta-btn:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(96, 205, 255, 0.4); background: #80d8ff; }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 3rem; }
+            .app-preview { width: 100%; height: 400px; }
+            nav { padding: 15px; }
+            .step-box { flex-direction: column; gap: 10px; }
+            .nav-btn { display: none; } /* Hide GitHub button on mobile to save space */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 3D Background -->
+    <div id="canvas-container"></div>
+
+    <nav>
+        <div class="logo">Plati<span style="color:#fff">Parser</span></div>
+        <a href="https://github.com/Koaxz/PlatiRuParserGradio/tree/master/platiV3qt6" target="_blank" class="nav-btn">View Source</a>
+    </nav>
+
+    <section class="hero">
+        <h1 id="hero-title">Поиск товаров <br> <span>Со скоростью света</span></h1>
+        <p class="subtitle">
+            Профессиональный парсер Plati.market. Native Windows 11 GUI.
+            Многопоточность. Кэширование.
+        </p>
+
+        <!-- WINDOWS 11 STYLE APP PREVIEW -->
+        <div class="app-preview" id="app-card">
+            
+            <!-- Windows Title Bar -->
+            <div class="win-titlebar">
+                <div class="win-title">
+                    <!-- SVG Python Icon -->
+                    <svg class="win-icon" viewBox="0 0 24 24">
+                        <path d="M14.25.18l.9.2.73.26.59.3.45.32.34.34.25.34.16.33.1.3.04.26.02.2-.01.13V8.5l-.05.63-.13.55-.21.46-.26.38-.3.31-.33.25-.35.19-.35.14-.33.1-.3.07-.26.04-.21.02H8.77l-.69.05-.59.14-.5.22-.41.28-.33.32-.27.35-.2.36-.15.37-.1.35-.07.32-.04.27-.02.21v3.06H3.17l-.21-.03-.28-.07-.32-.12-.35-.18-.36-.26-.36-.36-.35-.46-.32-.59-.28-.73-.21-.88-.14-1.05-.05-1.23.06-1.22.16-1.04.24-.87.32-.71.36-.57.4-.44.42-.33.42-.24.4-.16.36-.1.32-.05.24-.01h.16l.06.01h8.16v-8.3h6l-.25-.21-.31-.21-.36-.17-.43-.11-.48-.06-.53-.02-.58.04-.62.1-.65.19-.69.29-.71.4-.71.53-.71.68-.7.82-.68.99-.64 1.16-.6 1.36-.54 1.57-.47 1.81-.38 2.08-.28 2.37-.17 2.71-.05 3.11.07 3.63.2 4.39.33 5.54.45 7.45.58 11.45.7 27.05.27.72.54.86.81.78 1.08.56 1.33.26 1.58-.11 1.8-.51 2.01-.95 2.2-1.43 2.34-1.95 2.44-2.52 2.49-3.15 2.48-3.83 2.42-4.58 2.3-5.43 2.11-6.4 1.86-7.55 1.53-8.98 1.11-10.88.6-13.74L.04 8.73l1.11.08 1.13-.05 1.09-.19 1.01-.31.88-.44.73-.56.54-.69.32-.81.1-1.38.1-1.44-.13-1.51-.34-1.56-.56-1.59-.77-1.59-.99-1.55-1.19-1.48-1.4-1.35-1.6-1.19-1.79-.97-1.99-.7-2.18-.38-2.36-.01-2.54.4-2.7.85-2.85 1.35-2.97 1.89-3.07 2.48-3.14 3.11-3.19 3.78-3.21 4.48-3.2 5.21-3.17 5.97-3.11 6.75-3.02 7.54-2.9 8.31-2.75 9.04-2.56 9.71-2.34 10.3-2.08 10.76-1.77 11.06-1.43 11.19-1.02 11.13-.57 10.84-.11z"/>
+                    </svg>
+                    <span>PlatiParser V3</span>
+                </div>
+                <div class="win-controls">
+                    <div class="win-btn">
+                        <svg viewBox="0 0 10 1"><path d="M0 .5h10" stroke="currentColor"/></svg>
+                    </div>
+                    <div class="win-btn">
+                        <svg viewBox="0 0 10 10"><path d="M1,1 L9,1 L9,9 L1,9 L1,1 Z M0,0 L10,0 L10,10 L0,10 L0,0 Z" fill="currentColor"/></svg>
+                    </div>
+                    <div class="win-btn close-btn">
+                        <svg viewBox="0 0 10 10"><path d="M1,0 L5,4 L9,0 L10,1 L6,5 L10,9 L9,10 L5,6 L1,10 L0,9 L4,5 L0,1 L1,0 Z" fill="currentColor"/></svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- App Body -->
+            <div class="win-body">
+                <!-- Input Area -->
+                <div class="win-input-group">
+                    <div class="win-input" style="display:flex; align-items:center; color:#aaa;">Search products...</div>
+                    <button class="win-button">Search</button>
+                </div>
+
+                <!-- Table -->
+                <div class="win-table-container">
+                    <div class="win-thead">
+                        <div class="win-th" style="flex:3">Product Name</div>
+                        <div class="win-th">Price</div>
+                        <div class="win-th">Rating</div>
+                        <div class="win-th">Sold</div>
+                    </div>
+                    
+                    <!-- Rows -->
+                    <div class="win-row">
+                        <div class="win-td" style="flex:3; color:#fff;">Cyberpunk 2077 Steam Key Global</div>
+                        <div class="win-td"><span class="price-tag">1890 ₽</span></div>
+                        <div class="win-td"><span class="rating-stars">★★★★★</span> 5.0</div>
+                        <div class="win-td">1,240</div>
+                    </div>
+                    <div class="win-row">
+                        <div class="win-td" style="flex:3; color:#fff;">Elden Ring Premium Edition</div>
+                        <div class="win-td"><span class="price-tag">2450 ₽</span></div>
+                        <div class="win-td"><span class="rating-stars">★★★★☆</span> 4.8</div>
+                        <div class="win-td">890</div>
+                    </div>
+                    <div class="win-row">
+                        <div class="win-td" style="flex:3; color:#fff;">Windows 11 Pro License Key</div>
+                        <div class="win-td"><span class="price-tag">150 ₽</span></div>
+                        <div class="win-td"><span class="rating-stars">★★★★★</span> 4.9</div>
+                        <div class="win-td">58,920</div>
+                    </div>
+                     <div class="win-row">
+                        <div class="win-td" style="flex:3; color:#fff;">Grand Theft Auto V (GTA 5)</div>
+                        <div class="win-td"><span class="price-tag">690 ₽</span></div>
+                        <div class="win-td"><span class="rating-stars">★★★★☆</span> 4.7</div>
+                        <div class="win-td">12,400</div>
+                    </div>
+                    <div class="win-row">
+                        <div class="win-td" style="flex:3; color:#fff;">Minecraft Java & Bedrock</div>
+                        <div class="win-td"><span class="price-tag">990 ₽</span></div>
+                        <div class="win-td"><span class="rating-stars">★★★★★</span> 5.0</div>
+                        <div class="win-td">5,200</div>
+                    </div>
+                    <div class="win-row">
+                         <div class="win-td" style="flex:3; color:#888;">Fetching more results...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="features">
+        <h2 class="section-title">Функционал</h2>
+        <div class="grid">
+            <div class="card">
+                <h3><span style="color:var(--primary)">⚡</span> Multithreading</h3>
+                <p>Concurrent.futures позволяет обрабатывать тысячи товаров за секунды, используя всю мощь процессора.</p>
+            </div>
+            <div class="card">
+                <h3><span style="color:var(--primary)">🖼</span> Native GUI</h3>
+                <p>Интерфейс написан на PyQt6. Он выглядит системно, работает быстро и потребляет мало памяти.</p>
+            </div>
+            <div class="card">
+                <h3><span style="color:var(--primary)">💾</span> Auto Caching</h3>
+                <p>Система кэширует результаты поиска. Повторный запрос открывается мгновенно без запросов к сети.</p>
+            </div>
+            <div class="card">
+                <h3><span style="color:var(--primary)">⚖</span> Sorting</h3>
+                <p>Мгновенная сортировка по цене, рейтингу продавца и количеству продаж в таблице.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="guide">
+        <h2 class="section-title">Быстрый старт</h2>
+        <div class="guide-container">
+            
+            <div class="step-box">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h3 class="step-title">Клонирование</h3>
+                    <div class="terminal-window">
+                        <span class="code-line">git clone https://github.com/Koaxz/PlatiRuParserGradio.git</span>
+                        <span class="code-line">cd platiV3qt6</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-box">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h3 class="step-title">Зависимости</h3>
+                    <div class="terminal-window">
+                        <span class="comment"># Установка библиотек</span>
+                        <span class="code-line">pip install requests PyQt6 pyinstaller</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-box">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h3 class="step-title">Запуск</h3>
+                    <div class="terminal-window">
+                        <span class="code-line">python main.py</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="download-section">
+        <h2 style="font-size: 2.5rem; margin-bottom: 20px; font-weight: 700;">Open Source</h2>
+        <p style="color: #aaa; margin-bottom: 30px;">Проект полностью бесплатен и открыт для модификаций.</p>
+        
+        <a href="https://github.com/Koaxz/PlatiRuParserGradio/tree/master/platiV3qt6" target="_blank" class="cta-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+            </svg>
+            GitHub Repository
+        </a>
+    </section>
+
+    <footer style="text-align: center; padding: 30px; border-top: 1px solid #222; color: #444; font-size: 0.9rem;">
+        <p>&copy; 2025 PlatiParser Project.</p>
+    </footer>
+
+    <script>
+        // --- THREE JS BACKGROUND ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // Simple Grid Sphere
+        const geometry = new THREE.IcosahedronGeometry(10, 2);
+        const material = new THREE.MeshBasicMaterial({ color: 0x60cdff, wireframe: true, transparent: true, opacity: 0.15 });
+        const sphere = new THREE.Mesh(geometry, material);
+        scene.add(sphere);
+
+        // Particles
+        const particlesGeometry = new THREE.BufferGeometry();
+        const posArray = new Float32Array(600 * 3);
+        for(let i=0; i<600*3; i++) posArray[i] = (Math.random()-0.5)*35;
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const particlesMesh = new THREE.Points(particlesGeometry, new THREE.PointsMaterial({ size: 0.03, color: 0x80d8ff }));
+        scene.add(particlesMesh);
+
+        camera.position.z = 15;
+        let mouseX = 0, mouseY = 0;
+        document.addEventListener('mousemove', (e) => { mouseX = e.clientX/window.innerWidth - 0.5; mouseY = e.clientY/window.innerHeight - 0.5; });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            sphere.rotation.y += 0.001; sphere.rotation.x += 0.0005;
+            particlesMesh.rotation.y = -mouseX * 0.2; particlesMesh.rotation.x = -mouseY * 0.2;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => { 
+            camera.aspect = window.innerWidth/window.innerHeight; 
+            camera.updateProjectionMatrix(); 
+            renderer.setSize(window.innerWidth, window.innerHeight); 
+        });
+
+        // --- GSAP ANIMATIONS ---
+        gsap.registerPlugin(ScrollTrigger);
+        
+        gsap.to("#hero-title", { opacity: 1, y: 0, duration: 1, delay: 0.2, ease: "power2.out" });
+        gsap.to(".subtitle", { opacity: 1, y: 0, duration: 1, delay: 0.4, ease: "power2.out" });
+        gsap.to("#app-card", { opacity: 1, rotateX: 10, duration: 1.2, delay: 0.5, ease: "power3.out" });
+
+        gsap.utils.toArray('.card').forEach((card, i) => {
+            gsap.from(card, {
+                scrollTrigger: { trigger: card, start: "top 90%" },
+                y: 30, opacity: 0, duration: 0.6, delay: i * 0.1
+            });
+        });
+
+        gsap.utils.toArray('.step-box').forEach((step, i) => {
+            gsap.to(step, {
+                scrollTrigger: { trigger: step, start: "top 85%" },
+                x: 0, opacity: 1, duration: 0.6, delay: i * 0.1
+            });
+        });
+    </script>
+</body>
+</html>
